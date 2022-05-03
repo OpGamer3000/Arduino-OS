@@ -6,7 +6,7 @@ Here is a list of items u need for this:<br><br>
 
 Arduino UNO/MEGA/NANO (ur choice)<br>
 EEPROM->AT24C16N<br>
-jumper wires (many)<br>
+jumper wires (~20)<br>
 some buttons<br>
 and ther u go!<br>
 (btw dont forget to upload the code lol)<br><br>
