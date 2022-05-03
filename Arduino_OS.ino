@@ -1,20 +1,32 @@
-//imports
+/*imports*/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
 
-//=====user defined stuf======
-#define GPU_ADRR 0x27     //the gpu/lcd communication addr
-#define HARDWARE_ADDR 0b000
+/*=====user defined stuf======*/
+#define GPU_ADRR 0x27                  //the gpu/lcd communication addr
 
-//======system defined stuf======
+/*======system defined stuf======*/
+//input, u can edit this if u want to configure the input pins
 #define left 8
 #define right 9
 #define select 10
-#define DISK (0b1010 << 3) + HARDWARE_ADDR   //disk stuf
+#define MAXADDR 255
 
-//defining objs / variables
+//disk stuf, edit only if you know what you are doing. . .
+#define HARDWARE_ADDR 0b000
+#define DISK (0b1010 << 3) + HARDWARE_ADDR
+
+//others
+#define endBit 254
+
+/*defining global objs / variables*/
 LiquidCrystal_I2C lcd(GPU_ADRR, 16, 2);
 int opt = 1;
+const String commands[] = {"mova", "movb", "movc", "movd", "int", "hlt", "exit"};
+const String keyboard[] = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+
+unsigned const int commandMAX = (sizeof(commands)/sizeof(String)) - 1;
+unsigned const int keyboardMAX = (sizeof(keyboard)/sizeof(String)) - 1;
 
 void setup() {
   Wire.begin();
@@ -133,137 +145,104 @@ void loop() {
       lcd.clear();
       lcd.noBacklight();
       while (true) {}
-    } else if(opt == 6){
+    } else if (opt == 6) {
       inter();
     }
   }
   delay(100);
 }
 
-void programEEPROM() {
-  byte addr, data = NULL;
-  byte count = 0;
+void programEEPROM() {                   //remake(?)
   lcd.clear();
   lcd.home();
-  lcd.print("Starting disk");
-  lcd.setCursor(0, 1);
-  lcd.print("programing...");
   delay(1000);
-  lcd.clear();
-  lcd.home();
-  lcd.print("addr: ");
-  lcd.setCursor(0, 1);
-  lcd.print("data:");
-  while (true) {
-    if (digitalRead(right) == 0 && count >= 0 && count <= 254) {
-      count++;
-      lcd.setCursor(7, 0);
-      lcd.print(count);
-      lcd.print("   ");
-      delay(100);
-    } else if (digitalRead(left) == 0 && count <= 255 && count >= 1) {
-      count--;
-      lcd.setCursor(7, 0);
-      lcd.print(count);
-      lcd.print("   ");
-      delay(100);
-    }
-    if (digitalRead(select) == 0) {
-      delay(1000);
-      addr = count;
-      count = 0;
-      while (true) {
-        if (digitalRead(right) == 0 && count >= 0 && count <= 254) {
-          count++;
-          lcd.setCursor(7, 1);
-          lcd.print(count);
-          lcd.print("   ");
-          delay(100);
-        } else if (digitalRead(left) == 0 && count <= 255 && count >= 1) {
-          count--;
-          lcd.setCursor(7, 1);
-          lcd.print(count);
-          lcd.print("   ");
-          delay(100);
-        }
 
-        if (digitalRead(select) == 0) {
-          data = count;
-          lcd.clear();
-          lcd.home();
-          lcd.print("Writing to disk");
-          writeDisk(addr, data);
-          delay(1000);
-          lcd.clear();
-          lcd.home();
-          lcd.print("Program disk<");
-          lcd.setCursor(0, 1);
-          lcd.print("Read disk");
-          return;
-        }
-      }
+  //function variables
+  byte overwrite = 0;
+  byte head = NULL;
+
+  lcd.print("OVERWRITE code?");
+  lcd.setCursor(0, 1);
+  lcd.print("NO<   YES");
+
+
+  while (true) {
+    if (digitalRead(right) == 0 && overwrite == 0) {
+      overwrite++;
+      lcd.setCursor(0, 1);
+      lcd.print("NO    YES<  ");
+    } else if (digitalRead(left) == 0 && overwrite == 1) {
+      overwrite--;
+      lcd.setCursor(0, 1);
+      lcd.print("NO<   YES  ");
+    }
+
+    if (digitalRead(select) == 0) {
+      break;
+    }
+  }
+
+  delay(10);
+  
+  if (overwrite == 1) {
+    prog(0);
+    return;
+    lcd.clear();
+    lcd.home();
+    lcd.print("Program disk<");
+    lcd.setCursor(0, 1);
+    lcd.print("Read disk");
+    return;
+  } else {
+    head = fileCheck();
+    if (head > 0) {
+      prog(head);
+    } else {
+      lcd.clear();
+      lcd.home();
+      lcd.print("Bad file format!");
+      delay(1000);
+      lcd.clear();
+      lcd.home();
+      lcd.print("Program disk<");
+      lcd.setCursor(0, 1);
+      lcd.print("Read disk");
+      return;
     }
   }
 }
 
-void inter() {
+void inter() {                    //remake
   byte addr = 0;
   byte data = 0;
 
   lcd.clear();
   lcd.home();
 
-  while(true){
+  //vregisters
+  byte a = 0;
+  char b = NULL;
+  byte c = 0;
+  byte d = 0;
+  bool cf = false;
+
+  while (true) {
     data = readDisk(addr);
 
     if(data == 1){
-      while(true){
-        addr++;
-
-        data = readDisk(addr);
-
-        if(data == 255){
-          break;
-        } else if(data == 0){
-          lcd.print("a");
-        } else if(data == 1){
-          lcd.print("b");
-        } else if(data == 2){
-          lcd.print("c");
-        } else if(data == 3){
-          lcd.print("d");
-        } else if(data == 4){
-          lcd.print("e");
-        } else if(data == 5){
-          lcd.print("f");
-        } else if(data == 6){
-          lcd.print("g");
-        } else if(data == 7){
-          lcd.print("0");
-        } else if(data == 8){
-          lcd.print("1");
-        } else if(data == 9){
-          lcd.print("2");
-        } else if(data == 10){
-          lcd.print("3");
-        } else if(data == 11){
-          lcd.print("4");
-        } else if(data == 12){
-          lcd.print("5");
-        } else if(data == 13){
-          lcd.print("6");
-        } else if(data == 14){
-          lcd.print("7");
-        } else if(data == 15){
-          lcd.print("8");
-        } else if(data ==16){
-          lcd.print("9");
-        }
+      addr++;
+      data = readDisk(addr);
+      addr++;
+      if(data == 1){
+        a = readDisk(addr);
       }
-    } else if(data == 255){
-      return;
-    } else if(data == 111){
-      while(true){
+    }
+
+
+
+
+    if (data == 111) {
+      while (true) {
         lcd.clear();
         lcd.home();
         lcd.print("SECRET GAME!");
@@ -272,8 +251,8 @@ void inter() {
         lcd.home();
         lcd.print("get ready");
         byte i = 0;
-        while(!i == 30){
-          if(digitalRead(left) == 0){
+        while (!i == 30) {
+          if (digitalRead(left) == 0) {
             lcd.clear();
             lcd.home();
             lcd.print("left player lost");
@@ -285,7 +264,7 @@ void inter() {
             return;
           }
 
-          if(digitalRead(right) == 0){
+          if (digitalRead(right) == 0) {
             lcd.clear();
             lcd.home();
             lcd.print("right player");
@@ -304,8 +283,8 @@ void inter() {
         lcd.clear();
         lcd.home();
         lcd.print("CLICK!");
-        while(true){
-          if(digitalRead(left) == 0){
+        while (true) {
+          if (digitalRead(left) == 0) {
             lcd.clear();
             lcd.home();
             lcd.print("left player WON");
@@ -317,7 +296,7 @@ void inter() {
             return;
           }
 
-          if(digitalRead(right) == 0){
+          if (digitalRead(right) == 0) {
             lcd.clear();
             lcd.home();
             lcd.print("right player");
@@ -338,21 +317,21 @@ void inter() {
   }
 }
 
-void readEEPROM() {
-  delay(300);
-  int count = 0;
-  byte addr;
+void readEEPROM() {                     //correction needed
   lcd.clear();
   lcd.home();
+  delay(300);
+  unsigned int count = 0;
+  unsigned int addr;
   lcd.print("Addr: ");
   while (true) {
-    if (digitalRead(left) == 0 && count <= 255 && count >= 1) {
+    if (digitalRead(left) == 0 && count <= MAXADDR && count >= 1) {
       count--;
       lcd.setCursor(6, 0);
       lcd.print(count);
       lcd.print("   ");
       delay(100);
-    } else if (digitalRead(right) == 0 && count >= 0 && count <= 254) {
+    } else if (digitalRead(right) == 0 && count >= 0 && count <= (MAXADDR - 1)) {
       count++;
       lcd.setCursor(6, 0);
       lcd.print(count);
@@ -384,6 +363,25 @@ void readEEPROM() {
   }
 }
 
+byte fileCheck() {
+   unsigned int addr = 0;
+  byte data = NULL;
+
+  while (true) {
+    if (addr >= 255) {
+      return 0;
+    }
+
+    data = readDisk(addr);
+
+    if (data == endBit && addr != 0) {
+      return addr - 1;
+    }
+
+    addr++;
+  }
+}
+
 void writeDisk(byte address, byte data) {
   Wire.beginTransmission(DISK);
   Wire.write(address);
@@ -403,4 +401,126 @@ byte readDisk(byte address) {
     data = Wire.read();
   }
   return data;
+}
+
+void prog(byte start) {                                 //=================main programer=====================
+  String command;
+  byte data = NULL;
+  byte addr = start;
+
+  while(true){
+    command = getcmd();
+
+    if(command == "mova"){
+      writeDisk(addr, 1);
+      addr++;
+      writeDisk(addr, 1);
+      addr++;
+
+      data = getDat();
+      writeDisk(addr, data);
+      data = 0;
+      addr++;
+    } else if(command == "movb"){
+      writeDisk(addr, 1);
+      addr++;
+      writeDisk(addr, 2);
+      addr++;
+
+      data = getDat();
+      writeDisk(addr, data);
+      data = 0;
+      addr++;
+    } else if(command == "movc"){
+      writeDisk(addr, 1);
+      addr++;
+      writeDisk(addr, 3);
+      addr++;
+
+      data = getDat();
+      writeDisk(addr, data);
+      data = 0;
+      addr++;
+    } else if(command == "movd"){
+      writeDisk(addr, 1);
+      addr++;
+      writeDisk(addr, 4);
+      addr++;
+
+      data = getDat();
+      writeDisk(addr, data);
+      data = 0;
+      addr++;
+    } else if(command == "int"){
+      writeDisk(addr, 2);
+      addr++;
+    } else if(command == "hlt"){
+      writeDisk(addr, 255);
+      addr++;
+    }
+    
+    
+    else if(command == "exit"){
+      writeDisk(addr, endBit);
+      return;
+    }
+  }
+}
+                                                         //========================end, start of extra stuf=========================
+byte getDat() {
+  delay(1000);
+  lcd.clear();
+  lcd.home();
+  lcd.print("DATA:");
+  byte count = 0;
+
+  while (true) {
+
+    if (digitalRead(right) == 0 && count <= (keyboardMAX - 1) && count >= 0) {
+      count++;
+      lcd.setCursor(0, 1);
+      lcd.print(keyboard[count]);
+      lcd.print("   ");
+      delay(100);
+    } else if (digitalRead(left) == 0 && count <= keyboardMAX && count >= 1) {
+      count--;
+      lcd.setCursor(0, 1);
+      lcd.print(keyboard[count]);
+      lcd.print("   ");
+      delay(100);
+    }
+
+    if (digitalRead(select) == 0) {
+      return count;
+    }
+  }
+}
+
+String getcmd(){
+  delay(1000);
+  lcd.clear();
+  lcd.home();
+  lcd.print("CMD:");
+
+  byte count = 0;
+
+  while(true){
+    if(digitalRead(right) == 0 && count <= (commandMAX - 1) && count >= 0){
+      count++;
+      lcd.setCursor(0, 1);
+      lcd.print(commands[count]);
+      lcd.print("   ");
+      delay(100);
+    } else if(digitalRead(left) == 0 && count <= commandMAX && count >= 1){
+      count--;
+      lcd.setCursor(0, 1);
+      lcd.print(commands[count]);
+      lcd.print("   ");
+      delay(100);
+    }
+
+    if(digitalRead(select) == 0){
+      return commands[count];
+    }
+  }
 }
