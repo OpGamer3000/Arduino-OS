@@ -145,15 +145,15 @@ void loop() {
 
   //function
   if (digitalRead(select) == 0) {
-    if (opt == 1) {                    //opt 1======
+    if (opt == 1) {                     //opt 1 || LED ON
       digitalWrite(LED_BUILTIN, HIGH);
-    } else if (opt == 2) {              //opt 2====
+    } else if (opt == 2) {              //opt 2 || LED OFF
       digitalWrite(LED_BUILTIN, LOW);
-    } else if (opt == 3) {              //opt 3======
+    } else if (opt == 3) {              //opt 3 || program DISK
       programEEPROM();
-    }  else if (opt == 4) {
+    }  else if (opt == 4) {             //opt 4 || read DISK
       readEEPROM();
-    } else if (opt == 5) {        //option 4===================
+    } else if (opt == 5) {              //opt 5 || SHUTDOWN
       lcd.clear();
       lcd.setCursor(0, 0);
       lcd.print("Shutting");
@@ -163,14 +163,14 @@ void loop() {
       lcd.clear();
       lcd.noBacklight();
       while (true) {}
-    } else if (opt == 6) {
+    } else if (opt == 6) {              //opt 6 || run DISK
       inter();
     }
   }
   delay(100);
 }
 
-void programEEPROM() {                   //remake(?)
+void programEEPROM() {
   lcd.clear();
   lcd.home();
   delay(1000);
@@ -235,41 +235,83 @@ void programEEPROM() {                   //remake(?)
   }
 }
 
-void inter() {                    //remake
-  byte addr = 0;
+void inter() {                    //make
   byte data = 0;
+  byte addr = 0;
 
-  lcd.clear();
-  lcd.home();
-
-  //vregisters
+  /*v-registers*/
   byte a = 0;
-  char b = NULL;
+  byte b = 0;
   byte c = 0;
-  byte d = 0;
-  bool cf = false;
+  char d = NULL;
+  byte cf = 0;
+  byte pointer = 0;
 
-  while (true) {
+  /*main*/
+  while(true){
     data = readDisk(addr);
 
-    if(data == 1){
+    switch(data){
+      case 1: //mova
       addr++;
       data = readDisk(addr);
+      a = data;
+      break;
+
+
+      case 2: //movb
       addr++;
-      if(data == 1){
-        a = readDisk(addr);
+      data = readDisk(addr);
+      b = data;
+      break;
+
+
+      case 3: //movc
+      addr++;
+      data = readDisk(addr);
+      c = data;
+      break;
+
+
+      case 4: //movd
+      addr++;
+      data = readDisk(addr);
+      d = data;
+      break;
+
+
+      case 5: //int
+      if(a == 0){
+        if(pointer > 15 && pointer <= 31){
+          lcd.setCursor((pointer - 16), 1);
+        } else if(pointer <= 15){
+          lcd.setCursor(pointer, 0);
+        }
+
+        lcd.print(d);
+        pointer++;
+      } else if(a == 1){
+        lcd.clear();
+      } else if(a == 2){
+        if(pointer != 0){
+          byte backspace = pointer - 1
+
+          if(backspace > 15 && backspace <= 31){
+            lcd.setCursor((backspace - 16), 1);
+            lcd.print(' ');
+          } else if(pointer <= 15){
+            lcd.setCursor(backspace, 0);
+            lcd.print(' ');
+          }
+
+          pointer--;
+        }
+      } else if(a == 3){
+        if(pointer <= //YES){
+          
+        }
       }
     }
-
-
-
-
-    if (data == 111) {
-      game();
-      return;
-    }
-
-    addr++;
   }
 }
 
@@ -320,7 +362,7 @@ void readEEPROM() {                     //correction needed
 }
 
 byte fileCheck() {
-   unsigned int addr = 0;
+  unsigned int addr = 0;
   byte data = NULL;
 
   while (true) {
@@ -331,7 +373,7 @@ byte fileCheck() {
     data = readDisk(addr);
 
     if (data == endBit && addr != 0) {
-      return addr - 1;
+      return addr;
     }
 
     addr++;
@@ -370,40 +412,6 @@ void prog(byte start) {                                 //=================main 
 
   while(true){
     command = getcmd();
-
-    if(){
-      
-    } else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }else if(){
-      
-    }
     
     switch(command){
       case "mova":
