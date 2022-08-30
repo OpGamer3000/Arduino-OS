@@ -1,9 +1,12 @@
 /*imports*/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
+#include <SoftwareSerial.h>
 
 /*=====user defined stuf======*/
 #define GPU_ADRR 0x27                  //the gpu/lcd communication addr
+#define RX 2                           //incase u wanted to change the coms port
+#define TX 3                           //...
 
 /*======system defined stuf======*/
 //input, u can edit this if u want to configure the input pins
@@ -21,6 +24,7 @@
 
 /*defining global objs / variables*/
 LiquidCrystal_I2C lcd(GPU_ADRR, 16, 2);
+SoftwareSerial esp(RX, TX);
 int opt = 1;
 const String commands[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "add", "sub", "jc", "jnc", "int", "hlt", "exit"};
 /*mova = 1
@@ -52,7 +56,8 @@ void setup() {
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("Booting...");
-  delay(512);
+  esp.begin(115200);
+  
   lcd.backlight();
   pinMode(left, INPUT_PULLUP);
   pinMode(right, INPUT_PULLUP);
@@ -138,6 +143,18 @@ void loop() {
     lcd.print("Shutdown<");
     lcd.setCursor(0, 1);
     lcd.print("Run disk");
+  } else if(digitalRead(left) == 0 && opt == 6){
+    opt++;
+    lcd.clear();
+    lcd.home();
+    lcd.print("Get temps[NET]<");
+  } else if(digitalRead(right) == 0 && opt == 7){
+    opt--;
+    lcd.clear();
+    lcd.home();
+    lcd.print("Shutdown");
+    lcd.setCursor(0, 1);
+    lcd.print("Run disk<");
   }
 
 
@@ -165,6 +182,14 @@ void loop() {
       while (true) {}
     } else if (opt == 6) {              //opt 6 || run DISK
       inter();
+    } else if(opt == 7){                //opt 7 || NET stuf
+      lcd.clear();
+      lcd.home();
+      lcd.print(getNet("PING\n"));
+      delay(3500);
+      lcd.clear();
+      lcd.home();
+      lcd.print("Get temps[NET]");
     }
   }
   delay(100);
@@ -294,7 +319,7 @@ void inter() {                    //make
         lcd.clear();
       } else if(a == 2){
         if(pointer != 0){
-          byte backspace = pointer - 1
+          byte backspace = pointer - 1;
 
           if(backspace > 15 && backspace <= 31){
             lcd.setCursor((backspace - 16), 1);
@@ -307,9 +332,23 @@ void inter() {                    //make
           pointer--;
         }
       } else if(a == 3){
-        if(pointer <= //YES){
-          
-        }
+        pointer = b;
+      }
+
+      break;
+
+      case 6: //jmp
+      addr++;
+      addr = readDisk(addr);
+
+      case 7: //je
+      addr++;
+      if(readDisk(addr) == readDisk(addr + 1)){
+        addr = readDisk(addr + 2);
+      } else {
+        cf = 1;
+        addr += 3;
+        break;
       }
     }
   }
@@ -412,53 +451,42 @@ void prog(byte start) {                                 //=================main 
 
   while(true){
     command = getcmd();
-    
-    switch(command){
-      case "mova":
+
+    if(command == "mova"){
       writeDisk(addr, 1);
       addr++;
       writeDisk(addr, getRAW());
-      addr+;
+      addr++;
       break;
-
-      
-      case "movb":
+    } else if(command = "movb"){
       writeDisk(addr, 2);
       addr++;
       writeDisk(addr, getRAW());
       addr++;
       break;
-
-      
-      case "movc":
+    } else if(command == "movc"){
       writeDisk(addr, 3);
       addr++;
       writeDisk(addr, getRAW());
       addr++;
       break;
-
-      
-      case "movd":
+    } else if(command == "movd"){
       writeDisk(addr, 4);
       addr++;
       writeDisk(addr, getDat());
       addr++;
       break;
-
-      
-      case "int":
+    } else if(command == "int"){
       writeDisk(addr, 5);
       addr++;
       break;
-
-      case "jmp":
+    } else if(command == "jmp"){
       writeDisk(addr, 6);
       addr++;
       writeDisk(addr, getRAW());
       addr++;
       break;
-
-      case "je":
+    } else if(command == "je"){
       writeDisk(addr, 7);
       addr++;
       writeDisk(addr, getNum(4, 1));
@@ -468,8 +496,7 @@ void prog(byte start) {                                 //=================main 
       writeDisk(addr, getRAW());
       addr++;
       break;
-
-      case "jne":
+    } else if(command == "jne"){
       writeDisk(addr, 7);
       addr++;
       writeDisk(addr, getNum(4, 1));
@@ -479,47 +506,47 @@ void prog(byte start) {                                 //=================main 
       writeDisk(addr, getRAW());
       addr++;
       break;
-
-      case "add":
+    } else if(command == "add"){
       writeDisk(addr, 9);
       addr++;
       break;
-
-      case "sub":
+    } else if(command == "sub"){
       writeDisk(addr, 10);
       addr++;
       break;
-
-      case "stc":
+    } else if(command == "stc"){
       writeDisk(addr, 11);
       addr++;
       break;
-
-      case "clc":
+    } else if(command == "clc"){
       writeDisk(addr, 12);
       addr++;
       break;
-
-      case "jc":
+    } else if(command == "jc"){
       writeDisk(addr, 13);
       addr++;
       writeDisk(addr, getRAW());
       break;
-
-      case "jnc":
+    } else if(command == "jnc"){
       writeDisk(addr, 14);
       addr++;
       writeDisk(addr, getRAW());
       break;
-
-      case "hlt":
+    } else if(command == "hlt"){
       writeDisk(addr, 255);
       addr++;
-      break;
-
-      default:
-      writeDisk(addr, 254);
+    } else if(command == "exit"){
+      writeDisk(addr, endBit);
       return;
+    } else{
+      lcd.clear();
+      lcd.home();
+      lcd.print("FATAL ERROR");
+      lcd.setCursor(0, 1);
+      lcd.print("STOPING...");
+      lcd.noBacklight();
+
+      while(true){} //nothing
     }
   }
 }
@@ -709,3 +736,12 @@ void game(){
         }
       }
 }
+
+String getNet(String data){
+  esp.print(data);
+  String input = esp.readStringUntil('\n');
+  
+  return input;
+}
+
+//yes
