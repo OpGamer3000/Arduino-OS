@@ -21,3 +21,5 @@ using esp's for internet stuf<br>
 adding more things to eeprom intrepeter(should be easy)<br>
 <br>
 yea basicaly thers a hell lota work to do...<br><br>
+
+## Still working on it its not complete (scraped pervious code)
