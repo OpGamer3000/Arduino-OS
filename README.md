@@ -9,7 +9,7 @@ Arduino UNO/MEGA/NANO (ur choice, if the requirments are more...will list it dow
 * EEPROM->AT24C16N<br>
 * jumper wires (~20)<br>
 * some buttons<br>
-* and ther u go!<br>
+and ther u go!<br>
 (btw dont forget to upload the code lol)<br><br>
 
 # Future of this OS thing?
