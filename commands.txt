@@ -1,0 +1,18 @@
+register data transfer format: [reg num], [data]
+
+mova ||   1, [data]
+movb ||   2, [data]
+movc ||   3, [data]
+movd ||   4, [data]
+int  ||   5
+jmp  ||   6, [block], [addr]
+je   ||   7, [x_reg], [y_reg], [block], [addr]
+jne  ||   8, [x_reg], [y_reg], [block], [addr]
+add  ||   9, [x_reg], [y_reg]
+sub  ||  10, [x_reg], [y_reg]
+stc  ||  11
+clc  ||  12
+jc   ||  13, [block], [addr]
+jnc  ||  14, [block], [addr]
+fend || 254
+hlt  || 255
