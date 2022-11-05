@@ -6,7 +6,7 @@ Whats this? This is an OS ~~type of thing~~ which i am making in my free time. I
 # What do i need to have to make this?
 Here is a list of items u need for this:<br><br>
 
-Arduino UNO/MEGA/NANO/PI-PICO (Still need to check compability and use the pins which will be universably available)<br>
+Arduino UNO/MEGA/NANO/PI-PICO (Still need to check compability and use the pins which will be universally available)<br>
 - EEPROM->AT24C16N
 - jumper wires
 - rotatry encoder module
