@@ -7,6 +7,7 @@
 //writes to disk
 void writeDisk(unsigned short lba, byte data) {     //FIXED
   byte block = 0b000;
+  const unsigned short lba_init = lba;
   
   while(true){
     if(lba <= 255){
@@ -17,7 +18,7 @@ void writeDisk(unsigned short lba, byte data) {     //FIXED
     block += 0b001;
   }
 
-  if(readDisk(lba) != data){
+  if(readDisk(lba_init) != data){
     Wire.beginTransmission((0b1010 << 3) + block);
     Wire.write(lba);
     Wire.write(data);
