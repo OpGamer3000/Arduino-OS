@@ -3,7 +3,7 @@
 */
 
 String getNet(String data){
-  esp.print(data);
+  esp.println(data);
   String input = esp.readStringUntil('\n');
   
   return input;

@@ -1,7 +1,3 @@
-/*
-  File fixed!
-*/
-
 /*imports*/
 #include <LiquidCrystal_I2C.h>
 #include <Wire.h>
@@ -14,11 +10,11 @@
 
 /*======system defined stuf======*/
 //input, u can edit this if u want to configure the input pins
-#define DT 8
-#define CLK 9
+#define CLK 8
+#define DT 9
 #define select 10
 
-//disk stuf. . .
+//disk settings
 #define lbaMAX 2047    //max stable address for the disk
 
 
@@ -26,16 +22,27 @@
 #define endBit 254
 #define devPIN 7
 
-/*defining global objs / variables*/
+// global objs / variables
 LiquidCrystal_I2C lcd(GPU_ADRR, 16, 2);
 SoftwareSerial esp(RX, TX);
+
 unsigned int opt = 1;
 byte lastStateCLK, currentStateCLK;
 bool devmode = false;
 
-const char *pageUP[] = {"", "LED on<         ", "LED on          ", "Program disk<   ", "Program disk    ", "Shutdown<       ", "Shutdown        ", "Get temps[NET]< ", "Get temps[NET]  "};
-const char *pageDOWN[] = {"", "LED off         ", "LED off<        ", "Read disk       ", "Read disk<      ", "Run disk        ", "Run disk<       ", "Write RAW       ", "Write RAW<     "};
-const char *commands[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "add", "sub", "jc", "jnc", "int", "hlt", "exit"};
+const char* const commands[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "add", "sub", "stc", "clc", "jc", "jnc", "int", "hlt", "exit"};
+const char* const page[] = {NULL, "LED on", "LED off", "Program disk", "Read disk", "Shutdown", "Run disk", "Get temps[NET]", "write RAW"};   // 15 chars MAX
+
+const byte backslash[] = {
+  B00000,
+  B10000,
+  B01000,
+  B00100,
+  B00010,
+  B00001,
+  B00000,
+  B00000
+};
 /*mova = 1
   movb = 2
   movc = 3
@@ -52,34 +59,40 @@ const char *commands[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "a
   jnc = 14
   fend = 254
   hlt = 255*/
-const char *keyboard[] = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+//const char* const keyboard[] = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
 
-unsigned const int commandMAX = (sizeof(commands)/sizeof(char*)) - 1;
-unsigned const int keyboardMAX = (sizeof(keyboard)/sizeof(char*)) - 1;
-unsigned const int optMAX = (sizeof(pageUP)/sizeof(char*)) - 1;
+#define commandMAX ((sizeof(commands)/sizeof(char*)) - 1)
+#define optMAX ((sizeof(page)/sizeof(char*)) - 1)
+
 
 //init
 void setup() {
   pinMode(devPIN, INPUT_PULLUP);
   Wire.begin();
   lcd.init();
+  lcd.createChar(byte(0), backslash);
   lcd.backlight();
-  lcd.clear();
-  lcd.home();
   if(!digitalRead(devPIN)){
-    lcd.print("Enable DEV mode?");
+    Serial.begin(9600);
+    lcd.home();
+    lcd.print(F("Enable DEV mode?"));
     lcd.setCursor(0, 1);
-    lcd.print("YES/NO (Serial)");
+    lcd.print(F("YES/NO (Serial)"));
     while(true){
       if(Serial.available()){
-        char* input = Serial.readStringUntil('\n');
+        String input = Serial.readStringUntil('\n');
         if(input == "YES"){
           devmode = true;
+        } else{
+          Serial.end();
         }
+        break;
       }
     }
   }
-  lcd.print("Booting...");
+  lcd.clear();
+  lcd.home();
+  lcd.print(F("Booting..."));
 
   esp.begin(115200);
   pinMode(CLK, INPUT);
@@ -87,17 +100,10 @@ void setup() {
   pinMode(select, INPUT_PULLUP);
   pinMode(LED_BUILTIN, OUTPUT);
   lcd.clear();
-  lcd.home();
-  lcd.print("LED on<");
-  lcd.setCursor(0, 1);
-  lcd.print("LED off");
+  updatePAGE();
 
   lastStateCLK = digitalRead(CLK);
 }
-
-/*
-TODO: remake GUI and GUI logic
-*/
 
 //main loop for the kernel
 void loop(){
@@ -105,12 +111,10 @@ void loop(){
 
   if(lastStateCLK != currentStateCLK){
     if(digitalRead(DT) != currentStateCLK && opt < optMAX){
-      opt++;
+      opt++;updatePAGE();
     } else if(digitalRead(DT) == currentStateCLK && opt > 1){
-      opt--;
+      opt--;updatePAGE();
     }
-
-    updatePAGE();
 
     lastStateCLK = digitalRead(CLK);
   }
@@ -136,13 +140,15 @@ void loop(){
       case 5:
       lcd.clear();
       lcd.home();
-      lcd.print("Shutting");
+      lcd.print(F("Shutting"));
       lcd.setCursor(0, 1);
-      lcd.print("down...");
+      lcd.print(F("down..."));
       lcd.noBacklight();
       lcd.noDisplay();
-      lcd.off();
-      while (true) {}
+      Serial.end();
+      esp.end();
+      cli();          // clear interupts
+      while (true);   // halt; loop forever...
       
       case 6:
       inter();
@@ -151,7 +157,7 @@ void loop(){
       case 7:
       lcd.clear();
       lcd.home();
-      lcd.print(getNet("PING\n"));
+      lcd.print(getNet(F("PING")));
       delay(3500);
       updatePAGE();
       break;

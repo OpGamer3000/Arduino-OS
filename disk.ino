@@ -1,7 +1,3 @@
-/*
-  File fixed? = false
-*/
-
 //2047 max address
 
 //writes to disk
@@ -54,7 +50,7 @@ byte readDisk(unsigned short lba) {       //FIXED
   return data;
 }
 
-unsigned short fileCheck() {          //FIXED
+unsigned short fileCheck(void) {          //FIXED
   unsigned short addr = 0;
   byte data;
 
@@ -73,7 +69,7 @@ unsigned short fileCheck() {          //FIXED
   }
 }
 
-void programEEPROM() {      //FIXED
+void programEEPROM(void) {      //FIXED
   lcd.clear();
   lcd.home();
   delay(500);
@@ -82,9 +78,9 @@ void programEEPROM() {      //FIXED
   byte overwrite = 0;
   byte head;
 
-  lcd.print("OVERWRITE code?");
+  lcd.print(F("OVERWRITE code?"));
   lcd.setCursor(0, 1);
-  lcd.print("NO<   YES");
+  lcd.print(F("NO<   YES"));
 
 
   lastStateCLK = digitalRead(CLK);
@@ -94,11 +90,11 @@ void programEEPROM() {      //FIXED
       if(digitalRead(DT) != currentStateCLK && overwrite == 0){
         overwrite++;
         lcd.setCursor(0, 1);
-        lcd.print("NO    YES<");
+        lcd.print(F("NO    YES<"));
       } else if(digitalRead(DT) == currentStateCLK && overwrite == 1) {
         overwrite--;
         lcd.setCursor(0, 1);
-        lcd.print("NO<   YES  ");
+        lcd.print(F("NO<   YES  "));
       }
       lastStateCLK = currentStateCLK;
     }
@@ -108,7 +104,6 @@ void programEEPROM() {      //FIXED
     }
   }
 
-  delay(10);
   
   if (overwrite == 1) {
     prog(0);
@@ -126,7 +121,7 @@ void programEEPROM() {      //FIXED
     } else {
       lcd.clear();
       lcd.home();
-      lcd.print("Bad file format!");
+      lcd.print(F("Bad file format!"));
       delay(1000);
       updatePAGE();
       return;
@@ -134,33 +129,31 @@ void programEEPROM() {      //FIXED
   }
 }
 
-void readEEPROM() {                     //FIXED
+void readEEPROM(void) {                     //FIXED
   if(devmode){
     unsigned short i = 0;
-    Serial.begin(115200);
     while(i <= lbaMAX){
       Serial.print(i);
-      Serial.print(" : ");
+      Serial.print(F(" : "));
       Serial.println(readDisk(i));
       i++;
     }
-    Serial.end();
   }
   byte data = readDisk(getLBA());
   lcd.home();
   lcd.clear();
-  lcd.print("DATA: ");
+  lcd.print(F("DATA: "));
   lcd.setCursor(0, 1);
   lcd.print(data);
   delay(1000);
   updatePAGE();
 }
 
-void writeRAW_EEPROM(){     //FIXED
+void writeRAW_EEPROM(void){     //FIXED
   writeDisk(getLBA(), getRAW());
   lcd.clear();
   lcd.home();
-  lcd.print("Writen!");
+  lcd.print(F("Writen!"));
   delay(500);
   updatePAGE();
 }

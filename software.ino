@@ -103,37 +103,55 @@ void prog(byte start) {                                 //=================main 
   while(true){
     command = getcmd();
 
-    if(commands[command] == "mova"){
+    if(command == 0){           // mova
       writeDisk(addr, 1);
       addr++;
       writeDisk(addr, getRAW());
       addr++;
       
-    } else if(commands[command] == "movb"){
+    } else if(command == 1){    // movb
       writeDisk(addr, 2);
       addr++;
       writeDisk(addr, getRAW());
       addr++;
       
-    } else if(commands[command] == "movc"){
+    } else if(command == 2){    // movc
       writeDisk(addr, 3);
       addr++;
       writeDisk(addr, getRAW());
       addr++;
       
-    } else if(commands[command] == "movd"){
+    } else if(command == 3){    // movd
       writeDisk(addr, 4);
       addr++;
       writeDisk(addr, getDat());
       addr++;
       
-    } else if(commands[command] == "int"){
+    } else if(command == 4){    // jmp
       writeDisk(addr, 5);
       addr++;
+      unsigned short lba = getLBA();
+      byte block = 0b000;
+      while(true){
+        if(lba <= 255){
+          break;
+        }
+
+        lba -= 256;
+        block += 0b001;
+      }
+
+      writeDisk(addr, block);
+      addr++;
+      writeDisk(addr, (byte) lba);
       
-    } else if(commands[command] == "jmp"){
+    } else if(command == 5){  // je
       writeDisk(addr, 6);
       addr++;
+      writeDisk(addr, getNum(4, 1));
+      addr++;
+      writeDisk(addr, getNum(4, 1));
+      addr++;
       unsigned short lba = getLBA();
       byte block = 0b000;
       while(true){
@@ -148,8 +166,9 @@ void prog(byte start) {                                 //=================main 
       writeDisk(addr, block);
       addr++;
       writeDisk(addr, (byte) lba);
+      addr++;
       
-    } else if(commands[command] == "je"){
+    } else if(command == 6){  // jne
       writeDisk(addr, 7);
       addr++;
       writeDisk(addr, getNum(4, 1));
@@ -172,30 +191,15 @@ void prog(byte start) {                                 //=================main 
       writeDisk(addr, (byte) lba);
       addr++;
       
-    } else if(commands[command] == "jne"){
-      writeDisk(addr, 7);
+    } else if(command == 7){    // add
+      writeDisk(addr, 8);
       addr++;
       writeDisk(addr, getNum(4, 1));
       addr++;
       writeDisk(addr, getNum(4, 1));
-      addr++;
-      unsigned short lba = getLBA();
-      byte block = 0b000;
-      while(true){
-        if(lba <= 255){
-          break;
-        }
-
-        lba -= 256;
-        block += 0b001;
-      }
-
-      writeDisk(addr, block);
-      addr++;
-      writeDisk(addr, (byte) lba);
       addr++;
       
-    } else if(commands[command] == "add"){
+    } else if(command == 8){    // sub
       writeDisk(addr, 9);
       addr++;
       writeDisk(addr, getNum(4, 1));
@@ -203,23 +207,33 @@ void prog(byte start) {                                 //=================main 
       writeDisk(addr, getNum(4, 1));
       addr++;
       
-    } else if(commands[command] == "sub"){
+    } else if(command == 9){   // stc
       writeDisk(addr, 10);
       addr++;
-      writeDisk(addr, getNum(4, 1));
-      addr++;
-      writeDisk(addr, getNum(4, 1));
-      addr++;
       
-    } else if(commands[command] == "stc"){
+    } else if(command == 10){   // clc
       writeDisk(addr, 11);
       addr++;
       
-    } else if(commands[command] == "clc"){
+    } else if(command == 11){   // jc
       writeDisk(addr, 12);
       addr++;
+      unsigned short lba = getLBA();
+      byte block = 0b000;
+      while(true){
+        if(lba <= 255){
+          break;
+        }
+
+        lba -= 256;
+        block += 0b001;
+      }
+
+      writeDisk(addr, block);
+      addr++;
+      writeDisk(addr, (byte) lba);
       
-    } else if(commands[command] == "jc"){
+    } else if(command == 12){   // jnc
       writeDisk(addr, 13);
       addr++;
       unsigned short lba = getLBA();
@@ -237,39 +251,24 @@ void prog(byte start) {                                 //=================main 
       addr++;
       writeDisk(addr, (byte) lba);
       
-    } else if(commands[command] == "jnc"){
+    } else if(command == 13){
       writeDisk(addr, 14);
       addr++;
-      unsigned short lba = getLBA();
-      byte block = 0b000;
-      while(true){
-        if(lba <= 255){
-          break;
-        }
-
-        lba -= 256;
-        block += 0b001;
-      }
-
-      writeDisk(addr, block);
-      addr++;
-      writeDisk(addr, (byte) lba);
-      
-    } else if(commands[command] == "hlt"){
+    } else if(command == 14){
       writeDisk(addr, 255);
       addr++;
-    } else if(commands[command] == "exit"){
+    } else if(command == 15){
       writeDisk(addr, endBit);
       return;
     } else{
       lcd.clear();
       lcd.home();
-      lcd.print("FATAL ERROR:");
+      lcd.print(F("FATAL ERROR:"));
       lcd.setCursor(0, 1);
       lcd.print(commands[command]);
-      lcd.noBacklight();
 
-      while(true){} //nothing
+      cli();        // disable interupts
+      while(true){} // nothing; loop forever
     }
   }
 }
