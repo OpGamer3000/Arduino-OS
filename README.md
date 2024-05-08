@@ -1,13 +1,13 @@
 ```Early access, "Run disk" option and network things are still not done```<br>
-```Ignore the "File fixed? = false" comments in the code. I forgor to remove it and am too lazy to remove it now :b```
-# Arduino-OS
-Whats this? This is an OS ~~type of thing~~ which i am making in my free time. I am here using an EEPROM (AT24C16N) which has a million write cycles and a lot of space according to the <a href="https://cdn-reichelt.de/documents/datenblatt/A300/24C08_16.PDF">data sheet</a>, rotatry encoder module, an I2C LCD communication driver and a LCD to make an OS ~~type of thing~~ which is indipendent.
 
-# What do i need to have to make this?
-Here is a list of items u need for this:<br><br>
+# Arduino-OS
+This is an OS ~~type of thing~~ which I am making in my free time. I am here using an EEPROM (AT24C16N) which has a million write cycles and a lot of space according to the <a href="https://cdn-reichelt.de/documents/datenblatt/A300/24C08_16.PDF">data sheet</a>, rotatry encoder module, an I2C LCD communication driver and a LCD to make an OS ~~type of thing~~ which will be a stand alone system.
+
+# Requirements
+Here is a list of items you need would for this:<br><br>
 
 Arduino UNO/MEGA/NANO/PI-PICO (Still need to check compability and use the pins which will be universally available)<br>
-- EEPROM->AT24C16N
+- EEPROM -> AT24C16N
 - jumper wires
 - rotatry encoder module
 - I2C LCD driver
