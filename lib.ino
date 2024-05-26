@@ -1,5 +1,5 @@
 /*
-  File fixed!
+  Support functions
 */
 
 byte getDat(void) {
@@ -9,11 +9,11 @@ byte getDat(void) {
   lcd.print(F("DATA:"));
   lcd.setCursor(0, 1);
   lcd.print(F("a"));
-  byte count = 33;
+  int count = 33;
 
   lastStateCLK = digitalRead(CLK);
   while (true) {
-    count = input_counter(count, 33, 125);
+    input_counter(&count, 33, 125);
     lcd.setCursor(0, 1);
 
     if(count == 92){
@@ -31,7 +31,7 @@ byte getDat(void) {
 }
 
 byte getNum(byte high, byte low){
-  byte count = 0;
+  int count = 0;
   delay(500);
   lcd.clear();
   lcd.home();
@@ -41,7 +41,7 @@ byte getNum(byte high, byte low){
   
   lastStateCLK = digitalRead(CLK);
   while(true){
-    count = input_counter(count, low, high);
+    input_counter(&count, low, high);
     lcd.setCursor(0, 1);
     lcd.print(count);
     lcd.print(F("   "));
@@ -58,15 +58,15 @@ byte getcmd(void){
   lcd.home();
   lcd.print(F("CMD:"));
   lcd.setCursor(0, 1);
-  lcd.print(commands[0]);
+  lcd.print(commands_inter[0]);
 
-  byte count = 0;
+  int count = 0;
 
   lastStateCLK = digitalRead(CLK);
   while(true){
-    count = input_counter(count, 0, commandMAX);
+    input_counter(&count, 0, commandMAX);
     lcd.setCursor(0, 1);
-    lcd.print(commands[count]);
+    lcd.print(commands_inter[count]);
     lcd.print(F("    "));
 
     if(digitalRead(select) == 0){
@@ -83,11 +83,11 @@ byte getRAW(void){
   lcd.setCursor(0, 1);
   lcd.print(F("0"));
 
-  byte count = 0;
+  int count = 0;
 
   lastStateCLK = digitalRead(CLK);
   while(true){
-    count = input_counter(count, 0, 255);
+    input_counter(&count, 0, 255);
     lcd.setCursor(0, 1);
     lcd.print(count);
     lcd.print(F("    "));
@@ -106,11 +106,11 @@ unsigned short getLBA(void){
   lcd.setCursor(0, 1);
   lcd.print(F("0"));
   
-  unsigned short count = 0;
+  int count = 0;
 
   lastStateCLK = digitalRead(CLK);
   while(true){
-    count = input_counter(count, 0, lbaMAX);
+    input_counter(&count, 0, lbaMAX);
     lcd.setCursor(0, 1);
     lcd.print(count);
     lcd.print(F("    "));
@@ -121,22 +121,21 @@ unsigned short getLBA(void){
   }
 }
 
-int input_counter(int previous_count, int min, int max){
+// here
+void input_counter(int* previous_count, int min, int max){
   currentStateCLK = digitalRead(CLK);
 
   if(currentStateCLK != lastStateCLK){
     if(digitalRead(DT) != currentStateCLK){
-      if(previous_count < max) previous_count++;
-      else previous_count = min;
+      if(*previous_count < max) (*previous_count)++;
+      else *previous_count = min;
     } else if(digitalRead(DT) == currentStateCLK){
-      if(previous_count > min) previous_count--;
-      else previous_count = max;
+      if(*previous_count > min) (*previous_count)--;
+      else *previous_count = max;
     }
 
     lastStateCLK = currentStateCLK;
   }
-
-  return previous_count;
 }
 
 void updatePAGE(void){
@@ -177,7 +176,6 @@ void updatePAGE(void){
         lcd.print(F(" "));
       }
     } else {
-      // lcd.print(F("                "));
       for(byte i = 0; i < 15; i++){
         lcd.print(F(" "));
       }
@@ -189,25 +187,3 @@ void updatePAGE(void){
     lcd.print(F("<"));
   }
 }
-
-/*
-
-currentStateCLK = digitalRead(CLK);
-
-    if(currentStateCLK != lastStateCLK){
-      if(digitalRead(DT) != currentStateCLK && count < commandMAX){
-        count++;
-        lcd.setCursor(0, 1);
-        lcd.print(commands[count]);
-        lcd.print(F("   "));
-      } else if(digitalRead(DT) == currentStateCLK && count > 0){
-        count--;
-        lcd.setCursor(0, 1);
-        lcd.print(commands[count]);
-        lcd.print(F("   "));
-      }
-
-      lastStateCLK = currentStateCLK;
-    }
-
-*/

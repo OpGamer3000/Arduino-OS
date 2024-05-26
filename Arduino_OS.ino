@@ -4,21 +4,21 @@
 #include <SoftwareSerial.h>
 
 /*=====user defined stuf======*/
-#define GPU_ADRR 0x27                  //the gpu/lcd communication addr
-#define RX 2                           //incase u wanted to change the coms port
-#define TX 3                           //...
+#define GPU_ADRR 0x27                  // the gpu/lcd communication addr
+#define RX 2                           // COM port for ESP-01
+#define TX 3                           // ...
 
 /*======system defined stuf======*/
-//input, u can edit this if u want to configure the input pins
+// Rotatory encoder input config
 #define CLK 8
 #define DT 9
 #define select 10
 
-//disk settings
-#define lbaMAX 2047    //max stable address for the disk
+// Disk config
+#define lbaMAX 2047    // max stable address for the disk
 
 
-//others
+// other things
 #define endBit 254
 #define devPIN 7
 
@@ -30,7 +30,7 @@ unsigned int opt = 1;
 byte lastStateCLK, currentStateCLK;
 bool devmode = false;
 
-const char* const commands[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "add", "sub", "stc", "clc", "jc", "jnc", "int", "hlt", "exit"};
+const char* const commands_inter[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "add", "sub", "stc", "clc", "jc", "jnc", "int", "hlt", "exit"};
 const char* const page[] = {NULL, "LED on", "LED off", "Program disk", "Read disk", "Shutdown", "Run disk", "Get temps[NET]", "write RAW"};   // 15 chars MAX
 
 const byte backslash[] = {
@@ -59,13 +59,64 @@ const byte backslash[] = {
   jnc = 14
   fend = 254
   hlt = 255*/
-//const char* const keyboard[] = {"a", "b", "c", "d", "e", "f", "g", "h", "i", "j", "k", "l", "m", "n", "o", "p", "q", "r", "s", "t", "u", "v", "w", "x", "y", "z", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
 
-#define commandMAX ((sizeof(commands)/sizeof(char*)) - 1)
+#define commandMAX ((sizeof(commands_inter)/sizeof(char*)) - 1)
 #define optMAX ((sizeof(page)/sizeof(char*)) - 1)
 
 
-//init
+// Function wrapper (one can add their own commands/tasks/functions)
+
+void cmd_LED_ON(){
+  digitalWrite(LED_BUILTIN, HIGH);
+}
+
+void cmd_LED_OFF(){
+  digitalWrite(LED_BUILTIN, LOW);
+}
+
+void cmd_program_disk(){
+  programEEPROM();
+}
+
+void cmd_read_disk(){
+  readEEPROM();
+}
+
+void cmd_shutdown(){
+  lcd.clear();
+  lcd.home();
+  lcd.print(F("Shutting"));
+  lcd.setCursor(0, 1);
+  lcd.print(F("down..."));
+  lcd.noBacklight();
+  lcd.noDisplay();
+  Serial.end();
+  esp.end();
+  cli();          // clear interupts
+  while (true);   // halt; loop forever...
+}
+
+void cmd_run_disk(){
+  inter();
+}
+
+void cmd_get_temps(){
+  lcd.clear();
+  lcd.home();
+  lcd.print(getNet(F("PING")));
+  delay(3500);
+  updatePAGE();
+}
+
+void cmd_write_raw(){
+  writeRAW_EEPROM();
+}
+
+
+typedef void (*function_pointer)();
+function_pointer commands[] = {cmd_LED_ON, cmd_LED_OFF, cmd_program_disk, cmd_read_disk, cmd_shutdown, cmd_run_disk, cmd_get_temps, cmd_write_raw};
+
+// init
 void setup() {
   pinMode(devPIN, INPUT_PULLUP);
   Wire.begin();
@@ -105,65 +156,23 @@ void setup() {
   lastStateCLK = digitalRead(CLK);
 }
 
-//main loop for the kernel
+// main loop for the kernel
 void loop(){
   currentStateCLK = digitalRead(CLK);
 
   if(lastStateCLK != currentStateCLK){
     if(digitalRead(DT) != currentStateCLK && opt < optMAX){
-      opt++;updatePAGE();
+      opt++;
+      updatePAGE();
     } else if(digitalRead(DT) == currentStateCLK && opt > 1){
-      opt--;updatePAGE();
+      opt--;
+      updatePAGE();
     }
 
     lastStateCLK = digitalRead(CLK);
   }
 
-  if(digitalRead(select) == 0){
-    switch(opt){
-      case 1:
-      digitalWrite(LED_BUILTIN, HIGH);
-      break;
-
-      case 2:
-      digitalWrite(LED_BUILTIN, LOW);
-      break;
-
-      case 3:
-      programEEPROM();
-      break;
-
-      case 4:
-      readEEPROM();
-      break;
-
-      case 5:
-      lcd.clear();
-      lcd.home();
-      lcd.print(F("Shutting"));
-      lcd.setCursor(0, 1);
-      lcd.print(F("down..."));
-      lcd.noBacklight();
-      lcd.noDisplay();
-      Serial.end();
-      esp.end();
-      cli();          // clear interupts
-      while (true);   // halt; loop forever...
-      
-      case 6:
-      inter();
-      break;
-
-      case 7:
-      lcd.clear();
-      lcd.home();
-      lcd.print(getNet(F("PING")));
-      delay(3500);
-      updatePAGE();
-      break;
-
-      case 8:
-      writeRAW_EEPROM();
-    }
+  if(!digitalRead(select)){
+    commands[opt-1]();
   }
 }

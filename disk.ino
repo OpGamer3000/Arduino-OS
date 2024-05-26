@@ -1,7 +1,11 @@
-//2047 max address
+/*
+  Disk driver
+
+  -> 2047 max address
+*/
 
 //writes to disk
-void writeDisk(unsigned short lba, byte data) {     //FIXED
+void writeDisk(unsigned short lba, byte data) {
   byte block = 0b000;
   const unsigned short lba_init = lba;
   
@@ -26,7 +30,7 @@ void writeDisk(unsigned short lba, byte data) {     //FIXED
 }
 
 //reads from disk
-byte readDisk(unsigned short lba) {       //FIXED
+byte readDisk(unsigned short lba) {
   byte data;
   byte block = 0b000;
 
@@ -50,7 +54,7 @@ byte readDisk(unsigned short lba) {       //FIXED
   return data;
 }
 
-unsigned short fileCheck(void) {          //FIXED
+unsigned short fileCheck(void) {
   unsigned short addr = 0;
   byte data;
 
@@ -69,7 +73,7 @@ unsigned short fileCheck(void) {          //FIXED
   }
 }
 
-void programEEPROM(void) {      //FIXED
+void programEEPROM(void) {
   lcd.clear();
   lcd.home();
   delay(500);
@@ -129,7 +133,7 @@ void programEEPROM(void) {      //FIXED
   }
 }
 
-void readEEPROM(void) {                     //FIXED
+void readEEPROM(void) {
   if(devmode){
     unsigned short i = 0;
     while(i <= lbaMAX){
@@ -149,7 +153,7 @@ void readEEPROM(void) {                     //FIXED
   updatePAGE();
 }
 
-void writeRAW_EEPROM(void){     //FIXED
+void writeRAW_EEPROM(void){
   writeDisk(getLBA(), getRAW());
   lcd.clear();
   lcd.home();

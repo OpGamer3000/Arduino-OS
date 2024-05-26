@@ -1,101 +1,107 @@
 /*
-  File fixed? = false
+   Inbuilt OS software for user
+
+  -> File fixed? = false
 */
 
-void inter() {                    //make
-  byte data = 0;
-  byte addr = 0;
+// TODO: remake inter()
+void inter() {
+  // TODO: !--REAMKE--!
 
-  /*v-registers*/
-  byte a = 0;
-  byte b = 0;
-  byte c = 0;
-  char d = 0;
-  byte cf = 0;
-  byte pointer = 0;
+  // byte data = 0;
+  // byte addr = 0;
 
-  /*main*/
-  while(true){
-    data = readDisk(addr);
+  // /*v-registers*/
+  // byte a = 0;
+  // byte b = 0;
+  // byte c = 0;
+  // char d = 0;
+  // byte cf = 0;
+  // byte pointer = 0;
 
-    switch(data){
-      case 1: //mova
-      addr++;
-      data = readDisk(addr);
-      a = data;
-      break;
+  // /*main*/
+  // while(true){
+  //   data = readDisk(addr);
 
-
-      case 2: //movb
-      addr++;
-      data = readDisk(addr);
-      b = data;
-      break;
+  //   switch(data){
+  //     case 1: //mova
+  //     addr++;
+  //     data = readDisk(addr);
+  //     a = data;
+  //     break;
 
 
-      case 3: //movc
-      addr++;
-      data = readDisk(addr);
-      c = data;
-      break;
+  //     case 2: //movb
+  //     addr++;
+  //     data = readDisk(addr);
+  //     b = data;
+  //     break;
 
 
-      case 4: //movd
-      addr++;
-      data = readDisk(addr);
-      d = data;
-      break;
+  //     case 3: //movc
+  //     addr++;
+  //     data = readDisk(addr);
+  //     c = data;
+  //     break;
 
 
-      case 5: //int
-      if(a == 0){
-        if(pointer > 15 && pointer <= 31){
-          lcd.setCursor((pointer - 16), 1);
-        } else if(pointer <= 15){
-          lcd.setCursor(pointer, 0);
-        }
+  //     case 4: //movd
+  //     addr++;
+  //     data = readDisk(addr);
+  //     d = data;
+  //     break;
 
-        lcd.print(d);
-        pointer++;
-      } else if(a == 1){
-        lcd.clear();
-      } else if(a == 2){
-        if(pointer != 0){
-          byte backspace = pointer - 1;
 
-          if(backspace > 15 && backspace <= 31){
-            lcd.setCursor((backspace - 16), 1);
-            lcd.print(' ');
-          } else if(pointer <= 15){
-            lcd.setCursor(backspace, 0);
-            lcd.print(' ');
-          }
+  //     case 5: //int
+  //     if(a == 0){
+  //       if(pointer > 15 && pointer <= 31){
+  //         lcd.setCursor((pointer - 16), 1);
+  //       } else if(pointer <= 15){
+  //         lcd.setCursor(pointer, 0);
+  //       }
 
-          pointer--;
-        }
-      } else if(a == 3){
-        pointer = b;
-      }
+  //       lcd.print(d);
+  //       pointer++;
+  //     } else if(a == 1){
+  //       lcd.clear();
+  //     } else if(a == 2){
+  //       if(pointer != 0){
+  //         byte backspace = pointer - 1;
 
-      break;
+  //         if(backspace > 15 && backspace <= 31){
+  //           lcd.setCursor((backspace - 16), 1);
+  //           lcd.print(F(" "));
+  //         } else if(pointer <= 15){
+  //           lcd.setCursor(backspace, 0);
+  //           lcd.print(F(" "));
+  //         }
 
-      case 6: //jmp
-      addr++;
-      addr = readDisk(addr);
+  //         pointer--;
+  //       }
+  //     } else if(a == 3){
+  //       pointer = b;
+  //     }
 
-      case 7: //je
-      addr++;
-      if(readDisk(addr) == readDisk(addr + 1)){
-        addr = readDisk(addr + 2);
-      } else {
-        cf = 1;
-        addr += 3;
-        break;
-      }
-    }
-  }
+  //     break;
+
+  //     case 6: //jmp
+  //     addr++;
+  //     addr = readDisk(addr);
+
+  //     case 7: //je
+  //     addr++;
+  //     if(readDisk(addr) == readDisk(addr + 1)){
+  //       addr = readDisk(addr + 2);
+  //     } else {
+  //       cf = 1;
+  //       addr += 3;
+  //       break;
+  //     }
+  //   }
+  // }
 }
 
+// DONE
 void prog(byte start) {                                 //=================main programer=====================
   byte command, data;
   byte addr = start;
@@ -265,10 +271,10 @@ void prog(byte start) {                                 //=================main 
       lcd.home();
       lcd.print(F("FATAL ERROR:"));
       lcd.setCursor(0, 1);
-      lcd.print(commands[command]);
+      lcd.print(commands_inter[command]);
 
       cli();        // disable interupts
-      while(true){} // nothing; loop forever
+      while(true);  // nothing; loop forever
     }
   }
 }
