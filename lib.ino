@@ -2,8 +2,10 @@
   Support functions
 */
 
+#define debounce 250
+
 byte getDat(void) {
-  delay(500);
+  delay(debounce);
   lcd.clear();
   lcd.home();
   lcd.print(F("DATA:"));
@@ -32,7 +34,7 @@ byte getDat(void) {
 
 byte getNum(byte high, byte low){
   int count = 0;
-  delay(500);
+  delay(debounce);
   lcd.clear();
   lcd.home();
   lcd.print(F("NUM:"));
@@ -53,7 +55,7 @@ byte getNum(byte high, byte low){
 }
 
 byte getcmd(void){
-  delay(500);
+  delay(debounce);
   lcd.clear();
   lcd.home();
   lcd.print(F("CMD:"));
@@ -76,7 +78,7 @@ byte getcmd(void){
 }
 
 byte getRAW(void){
-  delay(500);
+  delay(debounce);
   lcd.clear();
   lcd.home();
   lcd.print(F("RAW:"));
@@ -99,7 +101,7 @@ byte getRAW(void){
 }
 
 unsigned short getLBA(void){
-  delay(500);
+  delay(debounce);
   lcd.clear();
   lcd.home();
   lcd.print(F("LBA: "));

@@ -3,12 +3,12 @@
 #include <Wire.h>
 #include <SoftwareSerial.h>
 
-/*=====user defined stuf======*/
+/*===== user defined stuf ======*/
 #define GPU_ADRR 0x27                  // the gpu/lcd communication addr
 #define RX 2                           // COM port for ESP-01
 #define TX 3                           // ...
 
-/*======system defined stuf======*/
+/*====== system defined stuf ======*/
 // Rotatory encoder input config
 #define CLK 8
 #define DT 9
@@ -31,7 +31,13 @@ byte lastStateCLK, currentStateCLK;
 bool devmode = false;
 
 const char* const commands_inter[] = {"mova", "movb", "movc", "movd", "jmp", "je", "jne", "add", "sub", "stc", "clc", "jc", "jnc", "int", "hlt", "exit"};
-const char* const page[] = {NULL, "LED on", "LED off", "Program disk", "Read disk", "Shutdown", "Run disk", "Get temps[NET]", "write RAW"};   // 15 chars MAX
+const char* const page[] = {NULL,
+  "LED on", "LED off",
+  "Program disk", "Read disk",
+  "Shutdown", "Run disk",
+  "Get temps[NET]", "Write RAW",
+  "sus"
+};  // 15 chars MAX | add label for your application
 
 const byte backslash[] = {
   B00000,
@@ -43,6 +49,7 @@ const byte backslash[] = {
   B00000,
   B00000
 };
+
 /*mova = 1
   movb = 2
   movc = 3
@@ -63,8 +70,16 @@ const byte backslash[] = {
 #define commandMAX ((sizeof(commands_inter)/sizeof(char*)) - 1)
 #define optMAX ((sizeof(page)/sizeof(char*)) - 1)
 
+/* ==================== FUNCTION WRAPPER ==================== */
 
-// Function wrapper (one can add their own commands/tasks/functions)
+#define commands_MAX sizeof(commands) / sizeof(commands[0])
+
+typedef void (*function_pointer)();
+
+typedef struct {
+  function_pointer run;
+  char* name;
+} function_container;
 
 void cmd_LED_ON(){
   digitalWrite(LED_BUILTIN, HIGH);
@@ -112,11 +127,21 @@ void cmd_write_raw(){
   writeRAW_EEPROM();
 }
 
+// This need not be in order
+const function_container commands[] = {
+  {cmd_LED_ON, "LED on"},
+  {cmd_LED_OFF, "LED off"},
+  {cmd_program_disk, "Program disk"},
+  {cmd_read_disk, "Read disk"},
+  {cmd_shutdown, "Shutdown"},
+  {cmd_run_disk, "Run disk"},
+  {cmd_get_temps, "Get temps[NET]"},
+  {cmd_write_raw, "Write RAW"}
+};
 
-typedef void (*function_pointer)();
-function_pointer commands[] = {cmd_LED_ON, cmd_LED_OFF, cmd_program_disk, cmd_read_disk, cmd_shutdown, cmd_run_disk, cmd_get_temps, cmd_write_raw};
 
-// init
+/* ==================== MAIN ==================== */
+
 void setup() {
   pinMode(devPIN, INPUT_PULLUP);
   Wire.begin();
@@ -172,7 +197,23 @@ void loop(){
     lastStateCLK = digitalRead(CLK);
   }
 
+  // cmd executer
   if(!digitalRead(select)){
-    commands[opt-1]();
+    bool found = false;
+    for(unsigned int i = 0; i < commands_MAX; i++){
+      if(!strcmp(commands[i].name, page[opt])){
+        commands[i].run();
+        found = true;
+        break;
+      }
+    }
+
+    if(!found){
+      lcd.clear();
+      lcd.home();
+      lcd.print(F("CMD not assigned"));
+      delay(1500);
+      updatePAGE();
+    }
   }
 }
